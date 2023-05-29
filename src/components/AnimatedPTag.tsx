@@ -1,5 +1,5 @@
 import { motion, useTransform, useScroll } from "framer-motion";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 export default function AnimatedPTag({
   rangeStart,
@@ -10,16 +10,40 @@ export default function AnimatedPTag({
   rangeEnd: number;
   children: React.ReactNode;
 }) {
+  const [fromRight, setFromRight] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  // ? In this updated component, we start with fromRight as false (which means all text initially comes from the left). Then we use the useEffect hook to randomly set fromRight to true or false after the component has mounted on the client side. This way, the server-rendered HTML will always match the initial client-side render (with fromRight as false), avoiding the hydration mismatch warning.
+  useEffect(() => {
+    setFromRight(Math.random() < 0.5);
+    setRotation(Math.floor(Math.random() * 61) - 30);
+  }, []);
+
   const { scrollYProgress } = useScroll();
+
   const x = useTransform(
     scrollYProgress,
     [rangeStart, rangeEnd],
-    ["100vw", "0vw"]
+    fromRight ? ["100vw", "0vw"] : ["-100vw", "0vw"]
   );
+  const opacity = useTransform(scrollYProgress, [rangeStart, rangeEnd], [0, 1]);
+
+  const scale = useTransform(
+    scrollYProgress,
+    [rangeStart, rangeEnd],
+    [0.01, 1]
+  );
+
+  const rotate = useTransform(
+    scrollYProgress,
+    [rangeStart, rangeEnd],
+    [rotation, 0]
+  );
+
+  // const color = useTransform(scrollYProgress, [rangeStart, rangeEnd], ["#F2CD5C", "#400E32"]);
 
   return (
     <motion.p
-      style={{ x: x }}
+      style={{ x: x, scale: scale, rotate: rotate, opacity: opacity }}
       className="mb-8"
       transition={{ ease: "easeOut", duration: 0.5 }}
     >
